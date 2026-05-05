@@ -30,6 +30,12 @@ npm run dev
 
 Vite dev server runs on `http://localhost:5173` and proxies `/api` and `/auth` to the backend, so the browser sees a single origin and the cookies stay first-party.
 
+## CI
+
+Pull requests to `main` run **Lint** (`eslint`), **Tests** (`vitest run`), and **Build** (`tsc` + `vite build`) via [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+Locally: `npm run lint`, `npm test`, `npm run build`.
+
 ## Project layout
 
 ```

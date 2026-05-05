@@ -50,7 +50,10 @@ export default function Dashboard() {
   });
 
   const total = totalQuery.data?.total ?? 0;
-  const sample = sampleQuery.data?.data ?? [];
+  const sample = useMemo(
+    () => sampleQuery.data?.data ?? [],
+    [sampleQuery.data],
+  );
 
   const genderBreakdown = useMemo(
     () => makeBreakdown(sample, 'gender'),
