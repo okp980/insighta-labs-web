@@ -1,73 +1,60 @@
-# React + TypeScript + Vite
+# Insighta Labs Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Web portal for the Insighta Labs API. Built with **Vite + React + TypeScript + Tailwind v4 + shadcn/ui**.
 
-Currently, two official plugins are available:
+## Pages
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- `/login` – Sign in with GitHub OAuth
+- `/auth/callback` – Backend redirects here after OAuth and the SPA loads `/auth/me`
+- `/dashboard` – Live KPI cards and breakdowns (auto-refreshed every 15 s)
+- `/profiles` – Filterable, paginated profiles table; admin-only "New profile"
+- `/profiles/:id` – Profile detail with confidence bars; admin-only delete
+- `/search` – Natural-language search powered by `GET /api/profiles/search`
+- `/account` – Current user info and sign out
 
-## React Compiler
+## Authentication
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **HTTP-only cookies** for `access_token` and `refresh_token`. Never read from JavaScript.
+- **CSRF double-submit** — backend issues a non-HttpOnly `csrf_token` cookie. The API client echoes it back via the `X-CSRF-Token` header on every state-changing request.
+- **Silent refresh** — on a 401 the client calls `/auth/refresh` once and replays the request. If refresh fails it dispatches an `auth:expired` event and the router redirects to `/login`.
 
-## Expanding the ESLint configuration
+## Local development
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+You need the FastAPI backend running on `http://localhost:8000`.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cp .env.example .env
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Vite dev server runs on `http://localhost:5173` and proxies `/api` and `/auth` to the backend, so the browser sees a single origin and the cookies stay first-party.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Project layout
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+src/
+  components/
+    ui/          # shadcn/ui primitives (Button, Card, Dialog, ...)
+    Layout.tsx
+    ProtectedRoute.tsx
+    RoleGate.tsx
+    Pagination.tsx
+    CreateProfileDialog.tsx
+  hooks/
+    useAuth.ts
+  lib/
+    api.ts       # fetch wrapper: credentials, X-API-Version, CSRF, 401 retry
+    auth.ts      # /auth/me, /auth/logout, GitHub login redirect
+    csrf.ts      # read csrf_token cookie
+    profiles.ts  # /api/profiles/* helpers
+  pages/         # one file per route
+  types/api.ts   # shared types matching the backend OpenAPI
+```
+
+## Environment
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `VITE_API_VERSION` | `1` | Sent as `X-API-Version` on every API request. |
+| `VITE_API_PROXY_TARGET` | `http://localhost:8000` | Backend upstream for the dev proxy. |
