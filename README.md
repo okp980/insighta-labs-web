@@ -17,6 +17,7 @@ Web portal for the Insighta Labs API. Built with **Vite + React + TypeScript + T
 - **HTTP-only cookies** for `access_token` and `refresh_token`. Never read from JavaScript.
 - **CSRF double-submit** — backend issues a non-HttpOnly `csrf_token` cookie. The API client echoes it back via the `X-CSRF-Token` header on every state-changing request.
 - **Silent refresh** — on a 401 the client calls `/auth/refresh` once and replays the request. If refresh fails it dispatches an `auth:expired` event and the router redirects to `/login`.
+- **Axios** — shared instance in [`src/lib/http.ts`](src/lib/http.ts); CSRF + 401 handling and `ApiError` in [`src/lib/api.ts`](src/lib/api.ts). TanStack Query still uses `auth.ts` / `profiles.ts` helpers.
 
 ## Local development
 
@@ -50,7 +51,8 @@ src/
   hooks/
     useAuth.ts
   lib/
-    api.ts       # fetch wrapper: credentials, X-API-Version, CSRF, 401 retry
+    http.ts       # axios instances (main + refresh, no circular import with csrf)
+    api.ts        # interceptors, request(), api.get/post/delete, ApiError
     auth.ts      # /auth/me, /auth/logout, GitHub login redirect
     csrf.ts      # read csrf_token cookie
     profiles.ts  # /api/profiles/* helpers

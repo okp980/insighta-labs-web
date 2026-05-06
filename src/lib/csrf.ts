@@ -1,3 +1,5 @@
+import { http } from './http';
+
 export const CSRF_COOKIE_NAME = 'csrf_token';
 export const CSRF_HEADER_NAME = 'X-CSRF-Token';
 
@@ -21,7 +23,7 @@ export async function ensureCsrfToken(): Promise<string | null> {
   let token = readCsrfToken();
   if (token) return token;
   try {
-    await fetch('/', { credentials: 'include' });
+    await http.get('/');
   } catch {
     // Network failures fall through; the next request will surface the error.
   }
